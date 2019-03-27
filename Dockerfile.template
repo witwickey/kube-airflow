@@ -1,0 +1,87 @@
+# VERSION 1.10.2
+# AUTHOR: Naveenkumar R
+# DESCRIPTION: Docker image to run Airflow on Kubernetes which is capable of creating Kubernetes jobs
+# SOURCE: https://github.com/witwickey/kube-airflow
+
+FROM    python:3.6-slim
+MAINTAINER Naveenkumar R <spidy.bvb@gmail.com>
+
+# Never prompts the user for choices on installation/configuration of packages
+ENV     DEBIAN_FRONTEND noninteractive
+ENV     TERM linux
+
+# Define en_US.
+ENV     LANGUAGE en_US.UTF-8
+ENV     LANG en_US.UTF-8
+ENV     LC_ALL en_US.UTF-8
+ENV     LC_CTYPE en_US.UTF-8
+ENV     LC_MESSAGES en_US.UTF-8
+ENV     LC_ALL en_US.UTF-8
+
+# Airflow
+ENV     SLUGIFY_USES_TEXT_UNIDECODE=yes
+ENV     EMBEDDED_DAGS_LOCATION=./dags
+ENV     AIRFLOW_HOME /usr/local/airflow
+ENV     REQUIREMENTS_TXT_LOCATION=requirements/dags.txt
+
+ARG 	AIRFLOW_VERSION=1.10.2
+ARG 	AIRFLOW_HOME=/usr/local/airflow
+ARG 	AIRFLOW_DEPS=""
+ARG 	PYTHON_DEPS=""
+ENV 	AIRFLOW_GPL_UNIDECODE=yes
+
+WORKDIR /requirements
+COPY    requirements/airflow.txt /requirements/airflow.txt
+COPY    ${REQUIREMENTS_TXT_LOCATION} /requirements/dags.txt
+
+RUN         set -ex \
+        &&  buildDeps=' \
+                build-essential \
+                libblas-dev \
+                libffi-dev \
+                libkrb5-dev \
+                liblapack-dev \
+                libpq-dev \
+                libssl-dev \
+                libxml2-dev \
+                libxslt1-dev \
+                zlib1g-dev \
+				freetds-dev \
+				libsasl2-dev \
+				git \
+            ' \
+        &&  apt-get update -yqq \
+		&&  apt-get upgrade -yqq \
+        &&  apt-get install -yqq --no-install-recommends \
+                $buildDeps \
+                apt-utils \
+                curl \
+				freetds-bin \
+				build-essential \
+				default-libmysqlclient-dev \
+				rsync \
+				netcat \
+				locales \
+        && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
+		&& locale-gen \
+		&& update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
+		&& useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
+		&& pip install -U pip setuptools wheel \
+		&& pip install pytz \
+		&& pip install pyOpenSSL \
+		&& pip install ndg-httpsclient \
+		&& pip install pyasn1 \
+		&& pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
+		&& pip install 'redis>=2.10.5,<3' \
+		&& if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
+		&& apt-get install -y vim
+
+
+ENV         KUBECTL_VERSION 1.13
+RUN         curl -L -o /usr/local/bin/kubectl \
+                https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+        
+
+		
+
+

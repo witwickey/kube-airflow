@@ -64,6 +64,11 @@ if [ "$1" = "webserver" ] || [ "$1" = "worker" ] || [ "$1" = "scheduler" ] ; the
   if [ "$1" = "webserver" ] || [ "$1" = "worker" ]; then
     echo "Initialize database..."
     $CMD initdb
+	if [ "$1" = "webserver" ]; then
+		sleep 10
+		echo "Creating admin user..."
+		$CMD create_user --username admin --lastname Admin --firstname Admin --email admin@admin.com --role Admin --password adminPassword.
+	fi
   fi
 fi
 

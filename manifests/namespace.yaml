@@ -1,0 +1,7 @@
+# Ensure 'witwickey' namespace exists, because we create all resources there
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: witwickey
+  labels:
+    name: witwickey

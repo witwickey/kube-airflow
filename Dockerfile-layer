@@ -1,0 +1,20 @@
+FROM    witwickey/kube-airflow:v4.1
+
+COPY    script/entrypoint.sh ${AIRFLOW_HOME}/entrypoint.sh
+COPY    config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+COPY    script/git-sync ${AIRFLOW_HOME}/git-sync
+COPY    ${EMBEDDED_DAGS_LOCATION} ${AIRFLOW_HOME}/dags
+COPY    script/git-sync ${AIRFLOW_HOME}/git-sync
+COPY    ${EMBEDDED_DAGS_LOCATION} ${AIRFLOW_HOME}/dags
+COPY    requirements/requirements.txt /requirements/requirements.txt
+
+RUN     chown -R airflow: ${AIRFLOW_HOME} \
+        &&  chmod +x ${AIRFLOW_HOME}/entrypoint.sh \
+        &&  chmod +x ${AIRFLOW_HOME}/git-sync \
+		&&  chmod +x /usr/local/bin/kubectl
+
+EXPOSE  8080 5555 8793
+
+USER        airflow
+WORKDIR     ${AIRFLOW_HOME}
+ENTRYPOINT  ["./entrypoint.sh"]

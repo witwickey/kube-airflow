@@ -1,0 +1,11 @@
+az acr login --name wabteconedatascience
+docker build --rm -t kube-airflow:v4 -f Dockerfile-base .
+docker tag kube-airflow:v4 wabteconedatascience.azurecr.io/enroute/kube-airflow:v4
+docker push wabteconedatascience.azurecr.io/enroute/kube-airflow:v4
+
+az acr login --name wabteconedatascience
+docker build --rm -t airflow:v8.2 -f Dockerfile-layer .
+docker tag airflow:v8.1 wabteconedatascience.azurecr.io/enroute/airflow:v8.2
+docker push wabteconedatascience.azurecr.io/enroute/airflow:v8
+
+kubectl -n datascience apply -f ./manifests/airflow.all.v8.2.xings.local.logintest.yaml

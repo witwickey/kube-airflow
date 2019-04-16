@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
+  labels:
+    stack: witwickey
 spec:
   type: ClusterIP
   selector:
@@ -17,6 +19,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: rabbitmq
+  labels:
+    stack: witwickey
 spec:
   type: ClusterIP
   selector:
@@ -35,23 +39,28 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: web
+  name: airflow-web
+  labels:
+    stack: witwickey
 spec:
   type: LoadBalancer
+#  loadBalancerIP: 168.61.210.66
   selector:
     app: airflow
-    tier: web
+    tier: airflow-web
   ports:
-    - name: web
+    - name: airflow-web
       protocol: TCP
-      port: 8080
-      targetPort: web
+      port: 80
+      targetPort: airflow-web
       nodePort: 32080
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: flower
+  labels:
+    stack: witwickey
 spec:
   type: NodePort
   selector:
@@ -68,6 +77,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: worker
+  labels:
+    stack: witwickey
 spec:
   type: NodePort
   selector:
@@ -84,6 +95,8 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: postgres
+  labels:
+    stack: witwickey
 spec:
   replicas: 1
   template:
@@ -91,6 +104,7 @@ spec:
       labels:
         app: airflow
         tier: db
+        stack: witwickey
     spec:
       containers:
       - name: postgres
@@ -110,11 +124,14 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: rabbitmq
+  labels:
+    stack: witwickey
 spec:
   replicas: 1
   template:
     metadata:
       labels:
+        stack: witwickey
         app: airflow
         tier: rabbitmq
     spec:
@@ -138,39 +155,47 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: web
+  name: airflow-web
+  labels:
+    stack: witwickey
 spec:
   replicas: 1
   template:
     metadata:
       labels:
         app: airflow
-        tier: web
+        tier: airflow-web
+        stack: witwickey
     spec:
       restartPolicy: Always
       containers:
-      - name: web
-        image: "provide the image built using dockerfile"
+      - name: airflow-web
+        image: airflow:v8.2
         env:
         - name: AIRFLOW_HOME
           value: "/usr/local/airflow"
         - name: LOAD_DAGS_EXAMPLES
           value: "false"
+        - name: AIRFLOW__WEBSERVER__RBAC
+          value: "true"
         ports:
-        - name: web
+        - name: airflow-web
           containerPort: 8080
         args: ["webserver"]
         livenessProbe:
           httpGet:
-            path: /
+            path: /health
             port: 8080
           initialDelaySeconds: 240
-          periodSeconds: 60
+          periodSeconds: 120
+          timeoutSeconds: 5
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: flower
+  labels:
+    stack: witwickey
 spec:
   replicas: 1
   template:
@@ -178,11 +203,12 @@ spec:
       labels:
         app: airflow
         tier: flower
+        stack: witwickey
     spec:
       restartPolicy: Always
       containers:
       - name: flower
-        image: "provide the image built using dockerfile"
+        image: airflow:v8.2
         env:
         - name: AIRFLOW_HOME
           value: "/usr/local/airflow"
@@ -191,6 +217,8 @@ spec:
         # To prevent the error: ValueError: invalid literal for int() with base 10: 'tcp://10.0.0.83:5555'
         - name: FLOWER_PORT
           value: "5555"
+        - name: AIRFLOW__WEBSERVER__RBAC
+          value: "true"
         ports:
         - name: flower
           containerPort: 5555
@@ -200,6 +228,8 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: scheduler
+  labels:
+    stack: witwickey
 spec:
   replicas: 1
   template:
@@ -207,11 +237,12 @@ spec:
       labels:
         app: airflow
         tier: scheduler
+        stack: witwickey
     spec:
       restartPolicy: Always
       containers:
       - name: scheduler
-        image: "provide the image built using dockerfile"
+        image: airflow:v8.2
         # volumes:
         #     - /localpath/to/dags:/usr/local/airflow/dags
         env:
@@ -219,12 +250,16 @@ spec:
           value: "/usr/local/airflow"
         - name: LOAD_DAGS_EXAMPLES
           value: "false"
+        - name: AIRFLOW__WEBSERVER__RBAC
+          value: "true"
         args: ["scheduler", "-n", "-1"]
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: worker
+  labels:
+    stack: witwickey
 spec:
   replicas: 1
   template:
@@ -232,12 +267,13 @@ spec:
       labels:
         app: airflow
         tier: worker
+        stack: witwickey
     spec:
       hostname: worker
       restartPolicy: Always
       containers:
       - name: worker
-        image: "provide the image built using dockerfile"
+        image: airflow:v8.2
         # volumes:
         #     - /localpath/to/dags:/usr/local/airflow/dags
         env:
@@ -245,6 +281,8 @@ spec:
           value: "/usr/local/airflow"
         - name: LOAD_DAGS_EXAMPLES
           value: "false"
+        - name: AIRFLOW__WEBSERVER__RBAC
+          value: "true"
         ports:
         - name: worker
           containerPort: 8793

@@ -48,7 +48,7 @@ parallelism = 32
 dag_concurrency = 16
 
 # Are DAGs paused by default at creation
-dags_are_paused_at_creation = True
+dags_are_paused_at_creation = False
 
 # The maximum number of active DAG runs per DAG
 max_active_runs_per_dag = 16
@@ -67,11 +67,8 @@ fernet_key = {{ FERNET_KEY }}
 # Whether to disable pickling dags
 donot_pickle = False
 
-# How to authenticate users of the API
-auth_backend = airflow.api.auth.backend.default
-
 # Use FAB-based webserver with RBAC feature
-rbac = True
+rbac = False
 
 # How long before timing out a python file import while filling the DagBag
 dagbag_import_timeout = 30
@@ -108,10 +105,10 @@ worker_class = sync
 expose_config = true
 
 # Set to true to turn on authentication : http://pythonhosted.org/airflow/installation.html#web-authentication
-authenticate = True
+authenticate = False
 
 # Filter the list of dags by owner name (requires authentication to be enabled)
-filter_by_owner = True
+filter_by_owner = False
 
 [email]
 email_backend = airflow.utils.send_email_smtp

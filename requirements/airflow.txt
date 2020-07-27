@@ -12,7 +12,7 @@ celery>=4.0.0
 flower>=0.7.3
 # airflow[celery,postgresql,hive]
 #apache-airflow==1.8.1
-apache-airflow==1.10.6
+apache-airflow==1.10.11
 #git+https://github.com/apache/incubator-airflow#egg=airflow
 kubernetes
 Flask-WTF==0.14.2
